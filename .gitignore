@@ -1,0 +1,53 @@
+# Assignment brief (not for public repo)
+Surense home assignment-1.pdf
+*.pdf
+
+# Build outputs
+target/
+build/
+out/
+*.jar
+*.war
+*.class
+
+# Maven
+.mvn/
+!.mvn/wrapper/maven-wrapper.jar
+!.mvn/wrapper/maven-wrapper.properties
+
+# Gradle
+.gradle/
+gradle-app.setting
+
+# IDE — IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# IDE — VS Code
+.vscode/
+
+# IDE — Eclipse
+.classpath
+.project
+.settings/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Logs
+*.log
+logs/
+
+# Env / secrets
+.env
+.env.local
+application-local.properties
+application-local.yml
+
+# Docker
+docker-compose.override.yml
