@@ -1,12 +1,12 @@
 # Progress
 
 ## Current status
-Phase 1 — done. Starting Phase 2.
+Phase 2 — done. Starting Phase 3.
 
 ## Phase checklist
 - [x] Phase 0 — Scaffolding
 - [x] Phase 1 — Docker
-- [ ] Phase 2 — Schema & entities
+- [x] Phase 2 — Schema & entities
 - [ ] Phase 3 — Auth module (login, password change, JWT, admin seeder)
 - [ ] Phase 4 — Profile module
 - [ ] Phase 5 — Agent + Customer management
@@ -31,3 +31,12 @@ Phase 1 — done. Starting Phase 2.
 - Docker Compose: `mysql:8.4` + `app`, `depends_on` waits on MySQL healthcheck, persistent `mysql-data` volume
 - Dev defaults live in `.env.example` (committed template) → reviewer runs `cp .env.example .env` before `docker compose up`. `.env` is gitignored. `docker-compose.yml` uses `${VAR:?...}` for required secrets so a missing `.env` fails loudly.
 - `plain.jar` disabled in Gradle so Dockerfile can unambiguously copy the bootJar
+- Flyway V1 schema: `users`, `credentials` (shared PK via `@MapsId`), `user_roles` (own table w/ unique `(user_id, role)`), `customers` (shared PK, NOT NULL `agent_id`), `tickets` w/ `(customer_id, created_at)` index
+- Entities use Lombok + Hibernate `@CreationTimestamp` / `@UpdateTimestamp` (Instant fields)
+- Slice tests: H2 in `MODE=MySQL` with Hibernate `create-drop`; Flyway disabled in tests (its DDL is MySQL-specific)
+- Repo method `findAllByCustomer_UserId` uses `_` path syntax because `Customer.@Id` field is `userId` (from `@MapsId`), not `id`
+- **Non-negotiable rule: internal `BIGINT id` never appears in any URL or response body.** Enforced across all DTOs.
+- Two-ID pattern applied only where the API actually needs an external identifier:
+  - `tickets.external_id` — `BINARY(16)` UUIDv4, appears in `/tickets/{id}` URL and every ticket response.
+  - `users` — no `external_id`. All user-facing DTOs use natural keys (`username`, `email`) as identifiers; the internal `id` is never exposed.
+  - `customers`, `credentials`, `user_roles` — never referenced externally, no UUID.
