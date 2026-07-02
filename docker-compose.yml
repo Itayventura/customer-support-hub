@@ -1,0 +1,48 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: customer-hub-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?copy .env.example to .env before running}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?copy .env.example to .env before running}
+      MYSQL_USER: ${MYSQL_USER:?copy .env.example to .env before running}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?copy .env.example to .env before running}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: customer-hub-app
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USERNAME: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?copy .env.example to .env before running}
+      JWT_ISSUER: ${JWT_ISSUER:-customer-support-hub}
+      JWT_TTL_MINUTES: ${JWT_TTL_MINUTES:-60}
+      SEED_ADMIN_ENABLED: ${SEED_ADMIN_ENABLED:-false}
+      SEED_ADMIN_USERNAME: ${SEED_ADMIN_USERNAME:-}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-}
+      SEED_ADMIN_FULL_NAME: ${SEED_ADMIN_FULL_NAME:-}
+    ports:
+      - "8080:8080"
+
+volumes:
+  mysql-data:

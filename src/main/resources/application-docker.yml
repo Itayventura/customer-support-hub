@@ -1,0 +1,8 @@
+# Overrides applied when SPRING_PROFILES_ACTIVE=docker (set in docker-compose.yml).
+# Sensitive values (DB creds, JWT_SECRET) come from environment — see docker-compose.yml.
+
+logging:
+  level:
+    org.springframework.web: INFO
+    org.hibernate.SQL: INFO
+    com.surense.customerhub: INFO

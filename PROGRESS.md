@@ -1,11 +1,11 @@
 # Progress
 
 ## Current status
-Phase 0 — done. Starting Phase 1.
+Phase 1 — done. Starting Phase 2.
 
 ## Phase checklist
 - [x] Phase 0 — Scaffolding
-- [ ] Phase 1 — Docker
+- [x] Phase 1 — Docker
 - [ ] Phase 2 — Schema & entities
 - [ ] Phase 3 — Auth module (login, password change, JWT, admin seeder)
 - [ ] Phase 4 — Profile module
@@ -27,3 +27,7 @@ Phase 0 — done. Starting Phase 1.
 - Updatable profile fields: `full_name`, `email`. Password change is its own endpoint in auth
 - Non-updatable: `username`, `role`, relationships
 - Gradle wrapper committed (`gradle-wrapper.jar` + `.properties`); build via `./gradlew`
+- Multi-stage Dockerfile (JDK 21 builder → JRE 21 runtime, runs as non-root `app` user)
+- Docker Compose: `mysql:8.4` + `app`, `depends_on` waits on MySQL healthcheck, persistent `mysql-data` volume
+- Dev defaults live in `.env.example` (committed template) → reviewer runs `cp .env.example .env` before `docker compose up`. `.env` is gitignored. `docker-compose.yml` uses `${VAR:?...}` for required secrets so a missing `.env` fails loudly.
+- `plain.jar` disabled in Gradle so Dockerfile can unambiguously copy the bootJar

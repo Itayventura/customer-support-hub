@@ -12,32 +12,43 @@ Work in progress — see [`PROGRESS.md`](./PROGRESS.md).
 
 - Java 21
 - Spring Boot 3.5.x (Web, Data JPA, Validation, Security, OAuth2 Resource Server)
-- MySQL 8 + Flyway migrations
+- MySQL 8.4 + Flyway migrations
 - JWT authentication (HS256)
-- Docker / Docker Compose (added in Phase 1)
+- Gradle (Kotlin DSL) + Docker Compose
 
-## Build
+## Quick start — Docker
 
-```bash
-./gradlew build -x test
+Requires Docker Desktop running.
+
+```
+cp .env.example .env
+docker compose up --build
 ```
 
-## Run (local — requires MySQL reachable on `localhost:3306`)
+`.env.example` documents every configurable environment variable. `.env` is gitignored — edit it locally to change database credentials, the JWT signing secret, or the seeded admin's password before the first boot. Docker Compose will refuse to start if any required secret (`MYSQL_*_PASSWORD`, `JWT_SECRET`) is missing.
 
-```bash
-./gradlew bootRun
+**Services:**
+- `mysql` on host port `3306`, persistent volume `mysql-data`
+- `app` on host port `8080`, waits for MySQL healthcheck before booting
+
+**Tear down:**
+```
+docker compose down       # keep the database
+docker compose down -v    # wipe the database too
 ```
 
-Environment variables of interest:
+## Local run without Docker
 
-| Variable | Default | Purpose |
-|---|---|---|
-| `DB_URL` | `jdbc:mysql://localhost:3306/customer_hub?...` | JDBC URL |
-| `DB_USERNAME` | `root` | DB user |
-| `DB_PASSWORD` | `root` | DB password |
-| `SEED_ADMIN_ENABLED` | `true` | Seed one ADMIN on first boot |
-| `SEED_ADMIN_USERNAME` | `admin` | Seed admin username |
-| `SEED_ADMIN_PASSWORD` | `admin` | Seed admin password (change in prod) |
-| `JWT_SECRET` | dev default | HS256 signing key (≥ 32 chars) |
+Requires MySQL reachable on `localhost:3306`. All secrets must come from the shell environment — no in-source defaults.
 
-Docker Compose setup lands in Phase 1.
+```
+DB_URL="jdbc:mysql://localhost:3306/customer_hub" DB_USERNAME=root DB_PASSWORD=root JWT_SECRET="a-very-long-development-only-secret-32-chars-min" ./gradlew bootRun
+```
+
+## Build only
+
+```
+./gradlew clean bootJar
+```
+
+Produces `build/libs/customer-support-hub-0.0.1-SNAPSHOT.jar`.
