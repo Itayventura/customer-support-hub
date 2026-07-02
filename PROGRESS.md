@@ -1,13 +1,13 @@
 # Progress
 
 ## Current status
-Phase 2 — done. Starting Phase 3.
+Phase 3 — done. Starting Phase 4.
 
 ## Phase checklist
 - [x] Phase 0 — Scaffolding
 - [x] Phase 1 — Docker
 - [x] Phase 2 — Schema & entities
-- [ ] Phase 3 — Auth module (login, password change, JWT, admin seeder)
+- [x] Phase 3 — Auth module (login, password change, JWT, admin seeder)
 - [ ] Phase 4 — Profile module
 - [ ] Phase 5 — Agent + Customer management
 - [ ] Phase 6 — Ticket management
@@ -40,3 +40,9 @@ Phase 2 — done. Starting Phase 3.
   - `tickets.external_id` — `BINARY(16)` UUIDv4, appears in `/tickets/{id}` URL and every ticket response.
   - `users` — no `external_id`. All user-facing DTOs use natural keys (`username`, `email`) as identifiers; the internal `id` is never exposed.
   - `customers`, `credentials`, `user_roles` — never referenced externally, no UUID.
+- **JWT `sub` = username** (natural key). No user id in the token payload. Server code resolves username → `User` per request via `CurrentUserService` — one extra DB lookup, but preserves the "no internal id exposure" rule end-to-end.
+- **HS256** signing via `jjwt` (issuing) + Spring `NimbusJwtDecoder` (validation). Both share the `JWT_SECRET`. `JwtProperties` is `@Validated` with `@Size(min = 32)` so app refuses to boot with a short/missing secret.
+- **Stateless security filter chain**, CSRF disabled (no session), `POST /api/v1/auth/login` is `permitAll`, everything else authenticated. Method-level `@EnableMethodSecurity` for `@PreAuthorize` in later phases.
+- **BCrypt** password hashing throughout — used by `AuthenticationManager` + `AdminSeeder` + `AuthService.changePassword`.
+- **`AdminSeeder`** is a `CommandLineRunner`: idempotent (skips if any user exists), validates required config non-blank when enabled, seeds `User` + `Credentials` + `UserRole(ADMIN)` in one transaction.
+- **Global RFC-7807-style error responses** (`{ timestamp, status, error, message, path, fieldErrors? }`) via `@RestControllerAdvice`. `SecurityConfig` uses the same JSON shape for auth failures (401/403).
