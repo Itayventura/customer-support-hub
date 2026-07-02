@@ -2,20 +2,10 @@
 Surense home assignment-1.pdf
 *.pdf
 
-# Build outputs
-target/
+# Gradle — commit wrapper, ignore build/local state
 build/
 out/
-*.jar
-*.war
-*.class
-
-# Maven
-.mvn/
-!.mvn/wrapper/maven-wrapper.jar
-!.mvn/wrapper/maven-wrapper.properties
-
-# Gradle
+bin/
 .gradle/
 gradle-app.setting
 
@@ -45,9 +35,13 @@ logs/
 
 # Env / secrets
 .env
-.env.local
-application-local.properties
+.env.*
 application-local.yml
+application-local.yaml
+application-local.properties
+application-secrets.yml
+application-secrets.yaml
+application-secrets.properties
 
 # Docker
 docker-compose.override.yml
