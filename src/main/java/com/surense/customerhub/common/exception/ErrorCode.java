@@ -7,34 +7,35 @@ import org.springframework.http.HttpStatus;
  * Each entry owns both its HTTP status and its default human-readable message so callers
  * that don't need contextual detail get a canonical message automatically.
  *
- * <p>Serialized to clients in the {@code code} field of the error response so they can
- * branch on error type without parsing the {@code message}.
+ * <p>Default messages are factual, user-friendly English suitable as a fallback if the
+ * client renders them directly. Machine clients should branch on the enum name
+ * ({@link #name()}) rather than parse the message.
  */
 public enum ErrorCode {
 
     // ---- 400 ----
-    VALIDATION_FAILED(HttpStatus.BAD_REQUEST, "Request validation failed"),
-    MALFORMED_REQUEST(HttpStatus.BAD_REQUEST, "Malformed request body"),
-    PASSWORD_CURRENT_INCORRECT(HttpStatus.BAD_REQUEST, "Current password is incorrect"),
-    PASSWORD_SAME_AS_CURRENT(HttpStatus.BAD_REQUEST, "New password must be different from the current one"),
+    VALIDATION_FAILED(HttpStatus.BAD_REQUEST, "Some fields were invalid. Please review and try again."),
+    MALFORMED_REQUEST(HttpStatus.BAD_REQUEST, "The request could not be understood."),
+    PASSWORD_CURRENT_INCORRECT(HttpStatus.BAD_REQUEST, "Current password is incorrect."),
+    PASSWORD_SAME_AS_CURRENT(HttpStatus.BAD_REQUEST, "New password must be different from the current one."),
 
     // ---- 401 ----
-    AUTH_MISSING(HttpStatus.UNAUTHORIZED, "Authentication required"),
-    AUTH_INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "Invalid username or password"),
+    AUTH_MISSING(HttpStatus.UNAUTHORIZED, "Please sign in to continue."),
+    AUTH_INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "Invalid username or password."),
 
     // ---- 403 ----
-    ACCESS_DENIED(HttpStatus.FORBIDDEN, "Access denied"),
+    ACCESS_DENIED(HttpStatus.FORBIDDEN, "You do not have permission to perform this action."),
 
     // ---- 404 ----
-    RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "Resource not found"),
+    RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "The requested item could not be found."),
 
     // ---- 409 ----
-    CONFLICT_DUPLICATE_USERNAME(HttpStatus.CONFLICT, "Username already taken"),
-    CONFLICT_DUPLICATE_EMAIL(HttpStatus.CONFLICT, "Email already registered"),
-    CONFLICT_GENERIC(HttpStatus.CONFLICT, "Conflict with existing resource"),
+    CONFLICT_DUPLICATE_USERNAME(HttpStatus.CONFLICT, "This username is already taken."),
+    CONFLICT_DUPLICATE_EMAIL(HttpStatus.CONFLICT, "This email is already registered."),
+    CONFLICT_GENERIC(HttpStatus.CONFLICT, "This action conflicts with existing data."),
 
     // ---- 500 ----
-    INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error");
+    INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred. Please try again later.");
 
     private final HttpStatus status;
     private final String defaultMessage;

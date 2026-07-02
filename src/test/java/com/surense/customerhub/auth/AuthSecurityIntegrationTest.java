@@ -76,7 +76,7 @@ class AuthSecurityIntegrationTest {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.code").value("AUTH_INVALID_CREDENTIALS"))
-                .andExpect(jsonPath("$.message").value("Invalid username or password"));
+                .andExpect(jsonPath("$.message").value("Invalid username or password."));
     }
 
     @Test
@@ -95,7 +95,7 @@ class AuthSecurityIntegrationTest {
         mockMvc.perform(post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON).content("{not-json"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("MALFORMED_REQUEST"))
-                .andExpect(jsonPath("$.message").value("Malformed request body"));
+                .andExpect(jsonPath("$.message").value("The request could not be understood."));
     }
 
     @Test
@@ -126,7 +126,7 @@ class AuthSecurityIntegrationTest {
                         .content(body))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("PASSWORD_CURRENT_INCORRECT"))
-                .andExpect(jsonPath("$.message").value("Current password is incorrect"));
+                .andExpect(jsonPath("$.message").value("Current password is incorrect."));
     }
 
     @Test

@@ -1,14 +1,14 @@
 # Progress
 
 ## Current status
-Phase 3 — done. Starting Phase 4.
+Phase 4 — done. Starting Phase 5.
 
 ## Phase checklist
 - [x] Phase 0 — Scaffolding
 - [x] Phase 1 — Docker
 - [x] Phase 2 — Schema & entities
 - [x] Phase 3 — Auth module (login, password change, JWT, admin seeder)
-- [ ] Phase 4 — Profile module
+- [x] Phase 4 — Profile module
 - [ ] Phase 5 — Agent + Customer management
 - [ ] Phase 6 — Ticket management
 - [ ] Phase 7 — Tests hardening
@@ -46,3 +46,4 @@ Phase 3 — done. Starting Phase 4.
 - **BCrypt** password hashing throughout — used by `AuthenticationManager` + `AdminSeeder` + `AuthService.changePassword`.
 - **`AdminSeeder`** is a `CommandLineRunner`: idempotent (skips if any user exists), validates required config non-blank when enabled, seeds `User` + `Credentials` + `UserRole(ADMIN)` in one transaction.
 - **Global RFC-7807-style error responses** (`{ timestamp, status, error, message, path, fieldErrors? }`) via `@RestControllerAdvice`. `SecurityConfig` uses the same JSON shape for auth failures (401/403).
+- **Profile module** — `GET /api/v1/users/me` and `PATCH /api/v1/users/me`. Structural authorization: only `/me` exists, so users can never target another user's profile via this endpoint. `PATCH` uses null-means-"don't-change" semantics; when a field is present it's `@Valid`-ated. Email change triggers a uniqueness check → `CONFLICT_DUPLICATE_EMAIL` (409) on collision. Response uses natural keys (`username`, `email`); internal `id` never exposed.

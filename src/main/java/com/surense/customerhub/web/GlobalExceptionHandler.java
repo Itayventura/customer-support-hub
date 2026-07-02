@@ -5,6 +5,7 @@ import com.surense.customerhub.common.exception.ErrorCode;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
@@ -53,6 +54,17 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex, HttpServletRequest request) {
         return build(ErrorCode.ACCESS_DENIED, ErrorCode.ACCESS_DENIED.defaultMessage(), request, null);
+    }
+
+    /**
+     * Database constraint violations that made it past pre-checks — typically a race on a
+     * unique constraint (two concurrent inserts). Mapped to 409 with a generic message so
+     * SQL/schema detail doesn't leak; specifics go to the server log.
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrity(DataIntegrityViolationException ex, HttpServletRequest request) {
+        log.warn("Data integrity violation at {} {}: {}", request.getMethod(), request.getRequestURI(), ex.getMostSpecificCause().getMessage());
+        return build(ErrorCode.CONFLICT_GENERIC, ErrorCode.CONFLICT_GENERIC.defaultMessage(), request, null);
     }
 
     @ExceptionHandler(Exception.class)
