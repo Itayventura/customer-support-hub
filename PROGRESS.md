@@ -35,7 +35,6 @@ Phase 8 — done. Submission-ready.
 - Flyway V1 schema: `users`, `credentials` (shared PK via `@MapsId`), `user_roles` (own table w/ unique `(user_id, role)`), `customers` (shared PK, NOT NULL `agent_id`), `tickets` w/ `(customer_id, created_at)` index
 - Entities use Lombok + Hibernate `@CreationTimestamp` / `@UpdateTimestamp` (Instant fields)
 - Slice tests: H2 in `MODE=MySQL` with Hibernate `create-drop`; Flyway disabled in tests (its DDL is MySQL-specific)
-- Repo method `findAllByCustomer_UserId` uses `_` path syntax because `Customer.@Id` field is `userId` (from `@MapsId`), not `id`
 - **Non-negotiable rule: internal `BIGINT id` never appears in any URL or response body.** Enforced across all DTOs.
 - Two-ID pattern applied only where the API actually needs an external identifier:
   - `tickets.external_id` — `BINARY(16)` UUIDv4, appears in `/tickets/{id}` URL and every ticket response.
