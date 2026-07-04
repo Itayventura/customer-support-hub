@@ -30,6 +30,9 @@ public enum ErrorCode {
     // ---- 404 ----
     RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "The requested item could not be found."),
 
+    // ---- 405 ----
+    METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "This method is not allowed on this resource."),
+
     // ---- 409 ----
     CONFLICT_DUPLICATE_USERNAME(HttpStatus.CONFLICT, "This username is already taken."),
     CONFLICT_DUPLICATE_EMAIL(HttpStatus.CONFLICT, "This email is already registered."),
