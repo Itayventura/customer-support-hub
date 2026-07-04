@@ -5,6 +5,7 @@ import com.surense.customerhub.auth.dto.ChangePasswordRequest;
 import com.surense.customerhub.auth.dto.LoginRequest;
 import com.surense.customerhub.common.Role;
 import com.surense.customerhub.customer.CustomerRepository;
+import com.surense.customerhub.ticket.TicketRepository;
 import com.surense.customerhub.user.User;
 import com.surense.customerhub.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,6 +36,7 @@ class AuthSecurityIntegrationTest {
     @Autowired private CredentialsRepository credentialsRepository;
     @Autowired private UserRoleRepository userRoleRepository;
     @Autowired private CustomerRepository customerRepository;
+    @Autowired private TicketRepository ticketRepository;
     @Autowired private PasswordEncoder passwordEncoder;
     @Autowired private PlatformTransactionManager transactionManager;
 
@@ -42,6 +44,7 @@ class AuthSecurityIntegrationTest {
     void seedUser() {
         TransactionTemplate tx = new TransactionTemplate(transactionManager);
         tx.executeWithoutResult(status -> {
+            ticketRepository.deleteAllInBatch();
             customerRepository.deleteAllInBatch();
             credentialsRepository.deleteAllInBatch();
             userRoleRepository.deleteAllInBatch();

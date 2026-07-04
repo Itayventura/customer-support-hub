@@ -1,7 +1,7 @@
 # Progress
 
 ## Current status
-Phase 5 — done. Starting Phase 6.
+Phase 6 — done. Starting Phase 7 (test hardening) or 8 (docs).
 
 ## Phase checklist
 - [x] Phase 0 — Scaffolding
@@ -10,7 +10,7 @@ Phase 5 — done. Starting Phase 6.
 - [x] Phase 3 — Auth module (login, password change, JWT, admin seeder)
 - [x] Phase 4 — Profile module
 - [x] Phase 5 — Agent + Customer management
-- [ ] Phase 6 — Ticket management
+- [x] Phase 6 — Ticket management
 - [ ] Phase 7 — Tests hardening
 - [ ] Phase 8 — Docs & polish
 
@@ -48,3 +48,4 @@ Phase 5 — done. Starting Phase 6.
 - **Global RFC-7807-style error responses** (`{ timestamp, status, error, message, path, fieldErrors? }`) via `@RestControllerAdvice`. `SecurityConfig` uses the same JSON shape for auth failures (401/403).
 - **Profile module** — `GET /api/v1/users/me` and `PATCH /api/v1/users/me`. Structural authorization: only `/me` exists, so users can never target another user's profile via this endpoint. `PATCH` uses null-means-"don't-change" semantics; when a field is present it's `@Valid`-ated. Email change triggers a uniqueness check → `CONFLICT_DUPLICATE_EMAIL` (409) on collision. Response uses natural keys (`username`, `email`); internal `id` never exposed.
 - **Agent + Customer management** — `POST/GET /api/v1/agents` (ADMIN only via `@PreAuthorize("hasRole('ADMIN')")` on the controller); `POST /api/v1/customers` (AGENT only), `GET /api/v1/customers` (AGENT sees own, ADMIN sees all — service branches on `currentUserService.hasRole(...)`). Creation writes User + Credentials + UserRole (+ Customer for the customer flow) in one transaction; pre-checks return 409 `CONFLICT_DUPLICATE_USERNAME` / `CONFLICT_DUPLICATE_EMAIL`, with the DB constraint + `DataIntegrityViolationException` handler as belt-and-suspenders for races. Response DTOs use natural keys throughout; customer response embeds `agent: {username, fullName}` with no ids.
+- **Ticket management** — `POST /api/v1/tickets` (CUSTOMER only via `@PreAuthorize("hasRole('CUSTOMER')")`); `GET /api/v1/tickets` and `GET /api/v1/tickets/{id}` open to any authenticated caller, **scoped in the service** by role. URL `{id}` is the ticket's UUID `external_id` — internal `BIGINT` never exposed. Cross-user access on `GET /tickets/{id}` returns **404 `RESOURCE_NOT_FOUND`** rather than 403 (no info leak about existence). Filters: `status`, `from`, `to` via query params (ISO-8601 timestamps for the date range), composed with JPA `Specification`s built from `TicketSpecs`. Ordering: `createdAt DESC` on list.

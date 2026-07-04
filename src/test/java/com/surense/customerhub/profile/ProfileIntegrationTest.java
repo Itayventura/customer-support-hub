@@ -8,6 +8,7 @@ import com.surense.customerhub.auth.UserRoleRepository;
 import com.surense.customerhub.auth.dto.LoginRequest;
 import com.surense.customerhub.common.Role;
 import com.surense.customerhub.customer.CustomerRepository;
+import com.surense.customerhub.ticket.TicketRepository;
 import com.surense.customerhub.profile.dto.UpdateProfileRequest;
 import com.surense.customerhub.user.User;
 import com.surense.customerhub.user.UserRepository;
@@ -40,6 +41,7 @@ class ProfileIntegrationTest {
     @Autowired private CredentialsRepository credentialsRepository;
     @Autowired private UserRoleRepository userRoleRepository;
     @Autowired private CustomerRepository customerRepository;
+    @Autowired private TicketRepository ticketRepository;
     @Autowired private PasswordEncoder passwordEncoder;
     @Autowired private PlatformTransactionManager transactionManager;
 
@@ -49,6 +51,7 @@ class ProfileIntegrationTest {
     void seedAndLogin() throws Exception {
         TransactionTemplate tx = new TransactionTemplate(transactionManager);
         tx.executeWithoutResult(status -> {
+            ticketRepository.deleteAllInBatch();
             customerRepository.deleteAllInBatch();
             credentialsRepository.deleteAllInBatch();
             userRoleRepository.deleteAllInBatch();
