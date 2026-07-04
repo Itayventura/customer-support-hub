@@ -16,6 +16,7 @@ public enum ErrorCode {
     // ---- 400 ----
     VALIDATION_FAILED(HttpStatus.BAD_REQUEST, "Some fields were invalid. Please review and try again."),
     MALFORMED_REQUEST(HttpStatus.BAD_REQUEST, "The request could not be understood."),
+    INVALID_PARAMETER(HttpStatus.BAD_REQUEST, "A request parameter has an invalid value."),
     PASSWORD_CURRENT_INCORRECT(HttpStatus.BAD_REQUEST, "Current password is incorrect."),
     PASSWORD_SAME_AS_CURRENT(HttpStatus.BAD_REQUEST, "New password must be different from the current one."),
 

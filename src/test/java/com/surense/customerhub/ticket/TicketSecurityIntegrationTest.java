@@ -201,6 +201,15 @@ class TicketSecurityIntegrationTest {
                 .andExpect(status().isUnauthorized());
     }
 
+    @Test
+    void listWithInvalidStatusEnumReturns400() throws Exception {
+        mockMvc.perform(get("/api/v1/tickets").param("status", "BOGUS")
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_PARAMETER"))
+                .andExpect(jsonPath("$.fieldErrors[?(@.field=='status')]").exists());
+    }
+
     // -------- GET /tickets/{id} --------
 
     @Test
@@ -251,6 +260,15 @@ class TicketSecurityIntegrationTest {
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("RESOURCE_NOT_FOUND"));
+    }
+
+    @Test
+    void getWithMalformedUuidReturns400() throws Exception {
+        mockMvc.perform(get("/api/v1/tickets/not-a-uuid")
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_PARAMETER"))
+                .andExpect(jsonPath("$.fieldErrors[?(@.field=='id')]").exists());
     }
 
     private String login(String username, String password) throws Exception {

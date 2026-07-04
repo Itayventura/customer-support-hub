@@ -14,9 +14,12 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -39,6 +42,33 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleUnreadable(HttpMessageNotReadableException ex, HttpServletRequest request) {
         return build(ErrorCode.MALFORMED_REQUEST, ErrorCode.MALFORMED_REQUEST.defaultMessage(), request, null);
+    }
+
+    /**
+     * Query params and path variables that fail Spring's type conversion — e.g.
+     * {@code ?status=BOGUS} on an enum-typed param, or {@code /tickets/not-a-uuid}
+     * on a {@code UUID} path variable. Should be 400, not 500.
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
+        String paramName = ex.getName();
+        Class<?> requiredType = ex.getRequiredType();
+        String expectation;
+        if (requiredType != null && requiredType.isEnum()) {
+            String values = Arrays.stream(requiredType.getEnumConstants())
+                    .map(Object::toString)
+                    .collect(Collectors.joining(", "));
+            expectation = "one of: " + values;
+        } else if (requiredType != null) {
+            expectation = "a valid " + requiredType.getSimpleName();
+        } else {
+            expectation = "a valid value";
+        }
+        String fieldMessage = "'" + paramName + "' must be " + expectation + ".";
+        List<ErrorResponse.FieldError> fieldErrors = List.of(
+                new ErrorResponse.FieldError(paramName, fieldMessage)
+        );
+        return build(ErrorCode.INVALID_PARAMETER, ErrorCode.INVALID_PARAMETER.defaultMessage(), request, fieldErrors);
     }
 
     @ExceptionHandler(BadCredentialsException.class)
