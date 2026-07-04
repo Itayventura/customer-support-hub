@@ -14,7 +14,9 @@ import com.surense.customerhub.user.User;
 import com.surense.customerhub.user.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.List;
 import java.util.Map;
@@ -30,6 +32,7 @@ public class CustomerService {
     private final UserRoleRepository userRoleRepository;
     private final CustomerRepository customerRepository;
     private final PasswordEncoder passwordEncoder;
+    private final TransactionTemplate transactionTemplate;
 
     public CustomerService(
             CurrentUserService currentUserService,
@@ -37,7 +40,8 @@ public class CustomerService {
             CredentialsRepository credentialsRepository,
             UserRoleRepository userRoleRepository,
             CustomerRepository customerRepository,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder,
+            PlatformTransactionManager transactionManager
     ) {
         this.currentUserService = currentUserService;
         this.userRepository = userRepository;
@@ -45,47 +49,50 @@ public class CustomerService {
         this.userRoleRepository = userRoleRepository;
         this.customerRepository = customerRepository;
         this.passwordEncoder = passwordEncoder;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
-    @Transactional
     public CustomerResponse createCustomer(CreateCustomerRequest request) {
         User agent = currentUserService.currentUser();
-
-        if (credentialsRepository.existsByUsername(request.username())) {
-            throw new ApiException(ErrorCode.CONFLICT_DUPLICATE_USERNAME);
-        }
-        if (userRepository.existsByEmail(request.email())) {
-            throw new ApiException(ErrorCode.CONFLICT_DUPLICATE_EMAIL);
-        }
-
-        User user = userRepository.save(User.builder()
-                .email(request.email())
-                .fullName(request.fullName())
-                .build());
-
-        credentialsRepository.save(Credentials.builder()
-                .user(user)
-                .username(request.username())
-                .passwordHash(passwordEncoder.encode(request.password()))
-                .build());
-
-        userRoleRepository.save(UserRole.builder()
-                .user(user)
-                .role(Role.CUSTOMER)
-                .build());
-
         Credentials agentCredentials = currentUserService.currentCredentials();
-        customerRepository.save(Customer.builder()
-                .user(user)
-                .agent(agent)
-                .build());
+        String passwordHash = passwordEncoder.encode(request.password());
 
-        return new CustomerResponse(
-                request.username(),
-                user.getEmail(),
-                user.getFullName(),
-                new CustomerResponse.AgentRef(agentCredentials.getUsername(), agent.getFullName())
-        );
+        return transactionTemplate.execute(status -> {
+            if (credentialsRepository.existsByUsername(request.username())) {
+                throw new ApiException(ErrorCode.CONFLICT_DUPLICATE_USERNAME);
+            }
+            if (userRepository.existsByEmail(request.email())) {
+                throw new ApiException(ErrorCode.CONFLICT_DUPLICATE_EMAIL);
+            }
+
+            User user = userRepository.save(User.builder()
+                    .email(request.email())
+                    .fullName(request.fullName())
+                    .build());
+
+            credentialsRepository.save(Credentials.builder()
+                    .user(user)
+                    .username(request.username())
+                    .passwordHash(passwordHash)
+                    .build());
+
+            userRoleRepository.save(UserRole.builder()
+                    .user(user)
+                    .role(Role.CUSTOMER)
+                    .build());
+
+            customerRepository.save(Customer.builder()
+                    .user(user)
+                    .agent(agent)
+                    .build());
+
+            return new CustomerResponse(
+                    request.username(),
+                    user.getEmail(),
+                    user.getFullName(),
+                    new CustomerResponse.AgentRef(agentCredentials.getUsername(), agent.getFullName())
+            );
+        });
     }
 
     /**

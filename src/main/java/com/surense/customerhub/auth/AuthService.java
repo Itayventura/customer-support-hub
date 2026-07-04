@@ -11,7 +11,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.List;
 
@@ -23,19 +24,22 @@ public class AuthService {
     private final CredentialsRepository credentialsRepository;
     private final CurrentUserService currentUserService;
     private final PasswordEncoder passwordEncoder;
+    private final TransactionTemplate transactionTemplate;
 
     public AuthService(
             AuthenticationManager authenticationManager,
             JwtService jwtService,
             CredentialsRepository credentialsRepository,
             CurrentUserService currentUserService,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder,
+            PlatformTransactionManager transactionManager
     ) {
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
         this.credentialsRepository = credentialsRepository;
         this.currentUserService = currentUserService;
         this.passwordEncoder = passwordEncoder;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
     public TokenResponse login(LoginRequest request) {
@@ -52,7 +56,6 @@ public class AuthService {
         return TokenResponse.bearer(token.token(), token.expiresInSeconds());
     }
 
-    @Transactional
     public void changePassword(ChangePasswordRequest request) {
         Credentials credentials = currentUserService.currentCredentials();
 
@@ -64,6 +67,7 @@ public class AuthService {
         }
 
         credentials.setPasswordHash(passwordEncoder.encode(request.newPassword()));
-        credentialsRepository.save(credentials);
+
+        transactionTemplate.executeWithoutResult(status -> credentialsRepository.save(credentials));
     }
 }

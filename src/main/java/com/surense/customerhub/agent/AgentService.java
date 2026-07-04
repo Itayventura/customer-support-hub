@@ -13,7 +13,9 @@ import com.surense.customerhub.user.User;
 import com.surense.customerhub.user.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.List;
 import java.util.Map;
@@ -27,45 +29,53 @@ public class AgentService {
     private final CredentialsRepository credentialsRepository;
     private final UserRoleRepository userRoleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final TransactionTemplate transactionTemplate;
 
     public AgentService(
             UserRepository userRepository,
             CredentialsRepository credentialsRepository,
             UserRoleRepository userRoleRepository,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder,
+            PlatformTransactionManager transactionManager
     ) {
         this.userRepository = userRepository;
         this.credentialsRepository = credentialsRepository;
         this.userRoleRepository = userRoleRepository;
         this.passwordEncoder = passwordEncoder;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
-    @Transactional
     public AgentResponse createAgent(CreateAgentRequest request) {
-        if (credentialsRepository.existsByUsername(request.username())) {
-            throw new ApiException(ErrorCode.CONFLICT_DUPLICATE_USERNAME);
-        }
-        if (userRepository.existsByEmail(request.email())) {
-            throw new ApiException(ErrorCode.CONFLICT_DUPLICATE_EMAIL);
-        }
+        // BCrypt encode (~100ms) runs OUTSIDE the transaction so we don't hold a DB
+        // connection during CPU-bound hashing.
+        String passwordHash = passwordEncoder.encode(request.password());
 
-        User user = userRepository.save(User.builder()
-                .email(request.email())
-                .fullName(request.fullName())
-                .build());
+        return transactionTemplate.execute(status -> {
+            if (credentialsRepository.existsByUsername(request.username())) {
+                throw new ApiException(ErrorCode.CONFLICT_DUPLICATE_USERNAME);
+            }
+            if (userRepository.existsByEmail(request.email())) {
+                throw new ApiException(ErrorCode.CONFLICT_DUPLICATE_EMAIL);
+            }
 
-        credentialsRepository.save(Credentials.builder()
-                .user(user)
-                .username(request.username())
-                .passwordHash(passwordEncoder.encode(request.password()))
-                .build());
+            User user = userRepository.save(User.builder()
+                    .email(request.email())
+                    .fullName(request.fullName())
+                    .build());
 
-        userRoleRepository.save(UserRole.builder()
-                .user(user)
-                .role(Role.AGENT)
-                .build());
+            credentialsRepository.save(Credentials.builder()
+                    .user(user)
+                    .username(request.username())
+                    .passwordHash(passwordHash)
+                    .build());
 
-        return new AgentResponse(request.username(), user.getEmail(), user.getFullName());
+            userRoleRepository.save(UserRole.builder()
+                    .user(user)
+                    .role(Role.AGENT)
+                    .build());
+
+            return new AgentResponse(request.username(), user.getEmail(), user.getFullName());
+        });
     }
 
     @Transactional(readOnly = true)

@@ -19,6 +19,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import java.util.List;
 
@@ -38,6 +39,7 @@ class CustomerServiceTest {
     @Mock private UserRoleRepository userRoleRepository;
     @Mock private CustomerRepository customerRepository;
     @Mock private PasswordEncoder passwordEncoder;
+    @Mock private PlatformTransactionManager transactionManager;
 
     @InjectMocks private CustomerService customerService;
 
