@@ -46,3 +46,6 @@ application-secrets.properties
 
 # Docker
 docker-compose.override.yml
+
+# Local-only notes (interview prep, trade-off log, etc.)
+*.local.md

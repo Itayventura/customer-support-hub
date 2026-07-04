@@ -1,7 +1,7 @@
 # Progress
 
 ## Current status
-Phase 6 — done. Starting Phase 7 (test hardening) or 8 (docs).
+Phase 8 — done. Submission-ready.
 
 ## Phase checklist
 - [x] Phase 0 — Scaffolding
@@ -11,8 +11,9 @@ Phase 6 — done. Starting Phase 7 (test hardening) or 8 (docs).
 - [x] Phase 4 — Profile module
 - [x] Phase 5 — Agent + Customer management
 - [x] Phase 6 — Ticket management
-- [ ] Phase 7 — Tests hardening
-- [ ] Phase 8 — Docs & polish
+- [x] Phase 6.5 — Bug hunt: `MethodArgumentTypeMismatchException` handler (invalid enum / malformed UUID → 400 `INVALID_PARAMETER`)
+- [x] Phase 7 — JWT edge cases + issuer-validation gap closed (`NimbusJwtDecoder` now enforces `iss` via `JwtClaimValidator`)
+- [x] Phase 8 — Docs (README overhaul, endpoint reference, curl walkthrough, assignment→code mapping)
 
 ## Decisions log
 - Java 21 / Gradle (Kotlin DSL) / Package `com.surense.customerhub`
