@@ -1,5 +1,6 @@
 package com.surense.customerhub.auth;
 
+import com.surense.customerhub.common.Role;
 import com.surense.customerhub.common.exception.ApiException;
 import com.surense.customerhub.common.exception.ErrorCode;
 import com.surense.customerhub.user.User;
@@ -43,5 +44,18 @@ public class CurrentUserService {
         String username = currentUsername();
         return credentialsRepository.findByUsername(username)
                 .orElseThrow(() -> new ApiException(ErrorCode.AUTH_MISSING));
+    }
+
+    /**
+     * True if the current caller carries the given role as a Spring Security authority
+     * ({@code "ROLE_" + role.name()}).
+     */
+    public boolean hasRole(Role role) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) {
+            return false;
+        }
+        String needle = "ROLE_" + role.name();
+        return auth.getAuthorities().stream().anyMatch(a -> needle.equals(a.getAuthority()));
     }
 }

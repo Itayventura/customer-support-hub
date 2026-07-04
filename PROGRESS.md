@@ -1,7 +1,7 @@
 # Progress
 
 ## Current status
-Phase 4 — done. Starting Phase 5.
+Phase 5 — done. Starting Phase 6.
 
 ## Phase checklist
 - [x] Phase 0 — Scaffolding
@@ -9,7 +9,7 @@ Phase 4 — done. Starting Phase 5.
 - [x] Phase 2 — Schema & entities
 - [x] Phase 3 — Auth module (login, password change, JWT, admin seeder)
 - [x] Phase 4 — Profile module
-- [ ] Phase 5 — Agent + Customer management
+- [x] Phase 5 — Agent + Customer management
 - [ ] Phase 6 — Ticket management
 - [ ] Phase 7 — Tests hardening
 - [ ] Phase 8 — Docs & polish
@@ -47,3 +47,4 @@ Phase 4 — done. Starting Phase 5.
 - **`AdminSeeder`** is a `CommandLineRunner`: idempotent (skips if any user exists), validates required config non-blank when enabled, seeds `User` + `Credentials` + `UserRole(ADMIN)` in one transaction.
 - **Global RFC-7807-style error responses** (`{ timestamp, status, error, message, path, fieldErrors? }`) via `@RestControllerAdvice`. `SecurityConfig` uses the same JSON shape for auth failures (401/403).
 - **Profile module** — `GET /api/v1/users/me` and `PATCH /api/v1/users/me`. Structural authorization: only `/me` exists, so users can never target another user's profile via this endpoint. `PATCH` uses null-means-"don't-change" semantics; when a field is present it's `@Valid`-ated. Email change triggers a uniqueness check → `CONFLICT_DUPLICATE_EMAIL` (409) on collision. Response uses natural keys (`username`, `email`); internal `id` never exposed.
+- **Agent + Customer management** — `POST/GET /api/v1/agents` (ADMIN only via `@PreAuthorize("hasRole('ADMIN')")` on the controller); `POST /api/v1/customers` (AGENT only), `GET /api/v1/customers` (AGENT sees own, ADMIN sees all — service branches on `currentUserService.hasRole(...)`). Creation writes User + Credentials + UserRole (+ Customer for the customer flow) in one transaction; pre-checks return 409 `CONFLICT_DUPLICATE_USERNAME` / `CONFLICT_DUPLICATE_EMAIL`, with the DB constraint + `DataIntegrityViolationException` handler as belt-and-suspenders for races. Response DTOs use natural keys throughout; customer response embeds `agent: {username, fullName}` with no ids.
