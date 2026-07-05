@@ -5,6 +5,8 @@ import com.surense.customerhub.auth.dto.LoginRequest;
 import com.surense.customerhub.auth.dto.TokenResponse;
 import com.surense.customerhub.common.exception.ApiException;
 import com.surense.customerhub.common.exception.ErrorCode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -18,6 +20,8 @@ import java.util.List;
 
 @Service
 public class AuthService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
@@ -53,6 +57,7 @@ public class AuthService {
                 .toList();
 
         JwtService.IssuedToken token = jwtService.issueToken(request.username(), roles);
+        log.info("Login success username={} roles={}", request.username(), roles);
         return TokenResponse.bearer(token.token(), token.expiresInSeconds());
     }
 
@@ -69,5 +74,6 @@ public class AuthService {
         credentials.setPasswordHash(passwordEncoder.encode(request.newPassword()));
 
         transactionTemplate.executeWithoutResult(status -> credentialsRepository.save(credentials));
+        log.info("Password changed username={}", credentials.getUsername());
     }
 }

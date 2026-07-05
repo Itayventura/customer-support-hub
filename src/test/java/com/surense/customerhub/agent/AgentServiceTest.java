@@ -4,6 +4,7 @@ import com.surense.customerhub.agent.dto.AgentResponse;
 import com.surense.customerhub.agent.dto.CreateAgentRequest;
 import com.surense.customerhub.auth.Credentials;
 import com.surense.customerhub.auth.CredentialsRepository;
+import com.surense.customerhub.auth.CurrentUserService;
 import com.surense.customerhub.auth.UserRole;
 import com.surense.customerhub.auth.UserRoleRepository;
 import com.surense.customerhub.common.Role;
@@ -31,6 +32,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class AgentServiceTest {
 
+    @Mock private CurrentUserService currentUserService;
     @Mock private UserRepository userRepository;
     @Mock private CredentialsRepository credentialsRepository;
     @Mock private UserRoleRepository userRoleRepository;

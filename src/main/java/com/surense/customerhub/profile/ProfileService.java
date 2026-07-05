@@ -8,6 +8,8 @@ import com.surense.customerhub.profile.dto.ProfileResponse;
 import com.surense.customerhub.profile.dto.UpdateProfileRequest;
 import com.surense.customerhub.user.User;
 import com.surense.customerhub.user.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +17,8 @@ import java.util.Objects;
 
 @Service
 public class ProfileService {
+
+    private static final Logger log = LoggerFactory.getLogger(ProfileService.class);
 
     private final CurrentUserService currentUserService;
     private final UserRepository userRepository;
@@ -49,6 +53,7 @@ public class ProfileService {
         }
 
         userRepository.save(user);
+        log.info("Profile updated username={}", credentials.getUsername());
         return toResponse(credentials);
     }
 

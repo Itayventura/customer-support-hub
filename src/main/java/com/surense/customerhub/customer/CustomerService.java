@@ -12,6 +12,8 @@ import com.surense.customerhub.customer.dto.CreateCustomerRequest;
 import com.surense.customerhub.customer.dto.CustomerResponse;
 import com.surense.customerhub.user.User;
 import com.surense.customerhub.user.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -25,6 +27,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class CustomerService {
+
+    private static final Logger log = LoggerFactory.getLogger(CustomerService.class);
 
     private final CurrentUserService currentUserService;
     private final UserRepository userRepository;
@@ -57,7 +61,7 @@ public class CustomerService {
         Credentials agentCredentials = currentUserService.currentCredentials();
         String passwordHash = passwordEncoder.encode(request.password());
 
-        return transactionTemplate.execute(status -> {
+        CustomerResponse response = transactionTemplate.execute(status -> {
             if (credentialsRepository.existsByUsername(request.username())) {
                 throw new ApiException(ErrorCode.CONFLICT_DUPLICATE_USERNAME);
             }
@@ -93,6 +97,8 @@ public class CustomerService {
                     new CustomerResponse.AgentRef(agentCredentials.getUsername(), agent.getFullName())
             );
         });
+        log.info("Customer created actor={} newCustomerUsername={}", agentCredentials.getUsername(), request.username());
+        return response;
     }
 
     /**

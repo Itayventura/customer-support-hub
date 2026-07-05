@@ -4,6 +4,7 @@ import com.surense.customerhub.agent.dto.AgentResponse;
 import com.surense.customerhub.agent.dto.CreateAgentRequest;
 import com.surense.customerhub.auth.Credentials;
 import com.surense.customerhub.auth.CredentialsRepository;
+import com.surense.customerhub.auth.CurrentUserService;
 import com.surense.customerhub.auth.UserRole;
 import com.surense.customerhub.auth.UserRoleRepository;
 import com.surense.customerhub.common.Role;
@@ -11,6 +12,8 @@ import com.surense.customerhub.common.exception.ApiException;
 import com.surense.customerhub.common.exception.ErrorCode;
 import com.surense.customerhub.user.User;
 import com.surense.customerhub.user.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -25,6 +28,9 @@ import java.util.stream.Collectors;
 @Service
 public class AgentService {
 
+    private static final Logger log = LoggerFactory.getLogger(AgentService.class);
+
+    private final CurrentUserService currentUserService;
     private final UserRepository userRepository;
     private final CredentialsRepository credentialsRepository;
     private final UserRoleRepository userRoleRepository;
@@ -32,12 +38,14 @@ public class AgentService {
     private final TransactionTemplate transactionTemplate;
 
     public AgentService(
+            CurrentUserService currentUserService,
             UserRepository userRepository,
             CredentialsRepository credentialsRepository,
             UserRoleRepository userRoleRepository,
             PasswordEncoder passwordEncoder,
             PlatformTransactionManager transactionManager
     ) {
+        this.currentUserService = currentUserService;
         this.userRepository = userRepository;
         this.credentialsRepository = credentialsRepository;
         this.userRoleRepository = userRoleRepository;
@@ -46,11 +54,10 @@ public class AgentService {
     }
 
     public AgentResponse createAgent(CreateAgentRequest request) {
-        // BCrypt encode (~100ms) runs OUTSIDE the transaction so we don't hold a DB
-        // connection during CPU-bound hashing.
+        String actor = currentUserService.currentUsername();
         String passwordHash = passwordEncoder.encode(request.password());
 
-        return transactionTemplate.execute(status -> {
+        AgentResponse response = transactionTemplate.execute(status -> {
             if (credentialsRepository.existsByUsername(request.username())) {
                 throw new ApiException(ErrorCode.CONFLICT_DUPLICATE_USERNAME);
             }
@@ -76,6 +83,8 @@ public class AgentService {
 
             return new AgentResponse(request.username(), user.getEmail(), user.getFullName());
         });
+        log.info("Agent created actor={} newAgentUsername={}", actor, request.username());
+        return response;
     }
 
     @Transactional(readOnly = true)

@@ -64,6 +64,7 @@ public class TicketService {
                 .customer(customer)
                 .build());
 
+        log.info("Ticket created actor={} externalId={}", currentUserService.currentUsername(), ticket.getExternalId());
         return toResponses(List.of(ticket)).get(0);
     }
 
